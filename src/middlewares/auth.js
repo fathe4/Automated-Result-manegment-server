@@ -2,10 +2,13 @@ const passport = require('passport');
 const httpStatus = require('http-status');
 const ApiError = require('../helper/ApiError');
 
-const verifyCallback = (req, res, resolve, reject) => {
+const verifyCallback = (req, res, requiredRole, resolve, reject) => {
     return async (err, user, info) => {
         if (err || info || !user) {
             return reject(new ApiError(httpStatus.UNAUTHORIZED, 'Please authenticate'));
+        }
+        if (requiredRole && user.role !== requiredRole) {
+            return reject(new Error("You don't have permission"));
         }
         req.user = user;
 
@@ -13,13 +16,13 @@ const verifyCallback = (req, res, resolve, reject) => {
     };
 };
 
-const auth = () => {
+const auth = (requiredRole) => {
     return async (req, res, next) => {
         return new Promise((resolve, reject) => {
             passport.authenticate(
                 'jwt',
                 { session: false },
-                verifyCallback(req, res, resolve, reject),
+                verifyCallback(req, res, requiredRole, resolve, reject),
             )(req, res, next);
         })
             .then(() => {

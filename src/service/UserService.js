@@ -4,7 +4,7 @@ const { v4: uuidv4 } = require('uuid');
 const UserDao = require('../dao/UserDao');
 const responseHandler = require('../helper/responseHandler');
 const logger = require('../config/logger');
-const { userConstant } = require('../config/constant');
+const { userConstant, userRoles } = require('../config/constant');
 
 class UserService {
     constructor() {
@@ -23,19 +23,23 @@ class UserService {
                 return responseHandler.returnError(httpStatus.BAD_REQUEST, 'Email already taken');
             }
             const uuid = uuidv4();
-            userBody.email = userBody.email.toLowerCase();
-            userBody.password = bcrypt.hashSync(userBody.password, 8);
-            userBody.uuid = uuid;
-            userBody.status = userConstant.STATUS_ACTIVE;
-            userBody.email_verified = userConstant.EMAIL_VERIFIED_FALSE;
 
-            let userData = await this.userDao.create(userBody);
+            const modifiedUserBody = {
+                ...userBody,
+                email: userBody.email.toLowerCase(),
+                password: bcrypt.hashSync(userBody.password, 8),
+                uuid,
+                status: userConstant.STATUS_ACTIVE,
+                email_verified: userConstant.EMAIL_VERIFIED_FALSE,
+                roles: [userRoles.STUDENT],
+            };
+
+            let userData = await this.userDao.create(modifiedUserBody);
 
             if (!userData) {
                 message = 'Registration Failed! Please Try again.';
                 return responseHandler.returnError(httpStatus.BAD_REQUEST, message);
             }
-          
             userData = userData.toJSON();
             delete userData.password;
 

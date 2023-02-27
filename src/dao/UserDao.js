@@ -14,7 +14,7 @@ class UserDao extends SuperDao {
 
     async isEmailExists(email) {
         return User.count({ where: { email } }).then((count) => {
-            if (count != 0) {
+            if (count !== 0) {
                 return true;
             }
             return false;

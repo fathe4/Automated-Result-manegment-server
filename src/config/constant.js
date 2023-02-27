@@ -5,6 +5,12 @@ const userConstant = {
     STATUS_INACTIVE: 0,
     STATUS_REMOVED: 2,
 };
+const userRoles = {
+    ADMIN: 'admin',
+    MODERATOR: 'moderator',
+    TEACHER: 'teacher',
+    STUDENT: 'student',
+};
 const verificationCodeConstant = {
     TYPE_EMAIL_VERIFICATION: 1,
     TYPE_RESET_PASSWORD: 2,
@@ -15,4 +21,5 @@ const verificationCodeConstant = {
 module.exports = {
     userConstant,
     verificationCodeConstant,
+    userRoles,
 };
