@@ -11,6 +11,10 @@ class TableDao extends SuperDao {
     async createTableColumn(tableDetails) {
         return Table.addColumn(tableDetails);
     }
+
+    async deleteColumn(tableDetails) {
+        return Table.deleteColumn(tableDetails);
+    }
 }
 
 module.exports = TableDao;

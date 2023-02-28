@@ -28,10 +28,11 @@ router.put(
 );
 
 router.post('/upload-result', fileUploadMiddleware, resultController.uploadResult);
+router.post('/create-column', tableValidator.checkColumnAddValidator, tableController.createColumn);
 router.post(
-    '/create-table',
-    tableValidator.checkTableColumnAddValidator,
-    tableController.createTable,
+    '/delete-column',
+    tableValidator.checkColumnDeleteValidator,
+    tableController.deleteColumn,
 );
 
 module.exports = router;

@@ -11,6 +11,11 @@ class AuthService {
         await this.tableDao.createTableColumn(tableDetails);
         return responseHandler.returnSuccess(httpStatus.CREATED);
     };
+
+    deleteColumn = async (tableDetails) => {
+        await this.tableDao.deleteColumn(tableDetails);
+        return responseHandler.returnSuccess(httpStatus.ACCEPTED);
+    };
 }
 
 module.exports = AuthService;

@@ -1,15 +1,25 @@
 const httpStatus = require('http-status');
-const CreateTableService = require('../service/CreateTableService');
+const TableService = require('../service/TableService');
 const logger = require('../config/logger');
 
 class TableController {
     constructor() {
-        this.createTableService = new CreateTableService();
+        this.tableService = new TableService();
     }
 
-    createTable = async (req, res) => {
+    createColumn = async (req, res) => {
         try {
-            const result = await this.createTableService.createTableColumn(req.body);
+            const result = await this.tableService.createTableColumn(req.body);
+            res.status(result.statusCode).send({ result });
+        } catch (e) {
+            logger.error(e);
+            res.status(httpStatus.BAD_GATEWAY).send(e);
+        }
+    };
+
+    deleteColumn = async (req, res) => {
+        try {
+            const result = await this.tableService.deleteColumn(req.body);
             res.status(result.statusCode).send({ result });
         } catch (e) {
             logger.error(e);

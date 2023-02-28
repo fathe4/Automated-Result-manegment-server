@@ -1,30 +1,25 @@
 const { Model } = require('sequelize');
 
-module.exports = (sequelize, DataTypes) => {
+module.exports = (sequelize) => {
     class Table extends Model {}
 
     Table.init(
-        {
-            id: {
-                type: DataTypes.INTEGER,
-                primaryKey: true,
-                autoIncrement: true,
-            },
-            // Add any existing fields here
-            existingField: {
-                type: DataTypes.STRING(15),
-            },
-        },
+        {},
         {
             sequelize,
             modelName: 'table',
             underscored: false,
         },
     );
-    Table.addColumn = async ({ tableName, columnHeading, afterColumn }) => {
+    Table.addColumn = async ({ tableName, columnName, afterColumn }) => {
         const query = afterColumn
-            ? `ALTER TABLE \`${tableName}\` ADD COLUMN \`${columnHeading}\` VARCHAR(15) AFTER \`${afterColumn}\``
-            : `ALTER TABLE \`${tableName}\` ADD COLUMN \`${columnHeading}\` VARCHAR(15)`;
+            ? `ALTER TABLE \`${tableName}\` ADD COLUMN \`${columnName}\` VARCHAR(15) AFTER \`${afterColumn}\``
+            : `ALTER TABLE \`${tableName}\` ADD COLUMN \`${columnName}\` VARCHAR(15)`;
+        await sequelize.query(query);
+    };
+
+    Table.deleteColumn = async ({ tableName, columnName }) => {
+        const query = `ALTER TABLE ${tableName} DROP COLUMN ${columnName};`;
         await sequelize.query(query);
     };
 
