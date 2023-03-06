@@ -1,8 +1,11 @@
 const httpStatus = require('http-status');
 const excelToJson = require('convert-excel-to-json');
 // const xlsx = require('xlsx');
+
 const UserDao = require('../dao/UserDao');
 const ResultDao = require('../dao/ResultDao');
+const TableDao = require('../dao/TableDao');
+
 const responseHandler = require('../helper/responseHandler');
 const logger = require('../config/logger');
 
@@ -93,10 +96,59 @@ const calculateSubjectNumbers = (subjectMarks, hasSubjectPosition, type, resultT
     return result;
 };
 
+function convertToColumn(n) {
+    let currentN = n;
+    if (currentN === 0) {
+        return null;
+    }
+    let result = '';
+    while (currentN > 0) {
+        let r = currentN % 26;
+        let d = parseInt(currentN / 26);
+        if (r === 0) {
+            r = 26;
+            d -= 1;
+        }
+        result += String.fromCharCode(64 + r);
+        currentN = d;
+    }
+    return result.split('').reverse().join('');
+}
+
+const addKeyLetter = (data) => {
+    const excludedColumns = [
+        'id',
+        'group_name',
+        'year',
+        'created_at',
+        'updated_at',
+        'total_marks',
+        'total_GP',
+        'GPA',
+        'total_failed',
+        'merit',
+    ];
+
+    const mapped = data
+        .filter((item) => {
+            return !excludedColumns.includes(item.column_name);
+        })
+        .map((item, index) => {
+            return {
+                [convertToColumn(index + 1)]: item.column_name,
+            };
+        });
+
+    const object = Object.assign({}, ...mapped);
+
+    return object;
+};
+
 class UploadResultService {
     constructor() {
         this.userDao = new UserDao();
         this.resultDao = new ResultDao();
+        this.tableDao = new TableDao();
     }
 
     /**
@@ -110,7 +162,10 @@ class UploadResultService {
 
             // Get the first worksheet in the workbook
             // const worksheet = workbook.Sheets[workbook.SheetNames[0]];
-
+            const tableColumnNames = await this.tableDao.getColumns('results').then((res) => {
+                return addKeyLetter(res);
+            });
+            console.log(tableColumnNames, 'tableColumnNames');
             const excelData = excelToJson({
                 sourceFile: file.path,
                 sheets: [
@@ -134,11 +189,6 @@ class UploadResultService {
                     },
                 ],
             });
-            console.log(excelData, 'excelData');
-
-            // Define the subjects for which you want to calculate totals
-            // console.log(excelData);
-
             const values = excelData.markSheet.map((markSheet) => {
                 const { roll, name, optional, ...subjects } = markSheet;
                 const subjectTotal = calculateSubjectNumbers(
@@ -177,50 +227,59 @@ class UploadResultService {
                 const totalFailed = getTotalFailedSubjects(subjectTotal);
 
                 return {
-                    subjectNumbers: { name, roll, ...subjects },
-                    subjectCalculation: {
-                        roll,
-                        name,
-                        ...subjectTotal,
-                        ...subjectPercentages,
-                        ...subjectGradePoints,
-                        totalMarks,
-                        totalGradePoint,
-                        GPA,
-                        totalFailed,
-                        ...eachSubjectTotal,
-                    },
+                    name,
+                    roll,
+                    ...subjects,
+                    ...subjectTotal,
+                    ...subjectPercentages,
+                    ...subjectGradePoints,
+                    totalMarks,
+                    totalGradePoint,
+                    GPA,
+                    totalFailed,
+                    ...eachSubjectTotal,
                 };
+                // return {
+                //     subjectNumbers: { name, roll, ...subjects },
+                //     subjectCalculation: {
+                //         roll,
+                //         name,
+                //         ...subjectTotal,
+                //         ...subjectPercentages,
+                //         ...subjectGradePoints,
+                //         totalMarks,
+                //         totalGradePoint,
+                //         GPA,
+                //         totalFailed,
+                //         ...eachSubjectTotal,
+                //     },
+                // };
             });
+            // const subjectNumbers = values.map((value) => {
+            //     return value.subjectNumbers;
+            // });
+            // const subjectCalculation = values.map((value) => {
+            //     return value.subjectCalculation;
+            // });
+            // const records = [];
 
-            const subjectNumbers = values.map((value) => {
-                return value.subjectNumbers;
-            });
-            const subjectCalculation = values.map((value) => {
-                return value.subjectCalculation;
-            });
-            const records = [];
+            // subjectNumbers.forEach((result) => {
+            //     const { name, roll } = result;
+            //     Object.entries(result).forEach(([key, value]) => {
+            //         if (key !== 'name' && key !== 'roll') {
+            //             records.push({
+            //                 name,
+            //                 roll,
+            //                 subjectName: key,
+            //                 score: value,
+            //             });
+            //         }
+            //     });
+            // });
+            console.log(values, 'values');
 
-            subjectNumbers.forEach((result) => {
-                const { name, roll } = result;
-                Object.entries(result).forEach(([key, value]) => {
-                    if (key !== 'name' && key !== 'roll') {
-                        records.push({
-                            name,
-                            roll,
-                            subjectName: key,
-                            score: value,
-                        });
-                    }
-                });
-            });
-console.log(records, "records");
-            // console.log(subjectNumbers, subjectCalculation);
-
-            // Insert the mapped data into the database using the sequelize library
-            await this.resultDao.uploadBulkResult(records);
-
-            return responseHandler.returnSuccess(httpStatus.CREATED, subjectNumbers);
+            // await this.resultDao.uploadBulkResult(values);
+            // return responseHandler.returnSuccess(httpStatus.CREATED, values);
         } catch (e) {
             logger.error(e);
             return responseHandler.returnError(httpStatus.BAD_REQUEST, 'Something went wrong!');

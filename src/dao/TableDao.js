@@ -8,6 +8,10 @@ class TableDao extends SuperDao {
         super(Table);
     }
 
+    async getColumns(tableName) {
+        return Table.columns(tableName);
+    }
+
     async createTableColumn(tableDetails) {
         return Table.addColumn(tableDetails);
     }

@@ -31,7 +31,7 @@ class UserService {
                 uuid,
                 status: userConstant.STATUS_ACTIVE,
                 email_verified: userConstant.EMAIL_VERIFIED_FALSE,
-                roles: [userRoles.STUDENT],
+                roles: userRoles.STUDENT,
             };
 
             let userData = await this.userDao.create(modifiedUserBody);
